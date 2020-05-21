@@ -18,8 +18,9 @@ int main() {
 	
 	adv::clear();
 	
-	//openFileDialog o({mbx{0.5f, 0.5f, 30, 30}});
-	openFileDialog o({10, 10, 40, 30});
+	//openFileDialog o({{}, mbx{0.5f, 0.5f, 30, 30}});
+	openFileDialog o({fbx{0.5f,0.5f,0.75f,0.75f}});
+	//openFileDialog o({10, 10, 40, 30});
 	//openFileDialog o({adv::width / 2, adv::height / 2, 20, 20});
 	std::string file;
 	if (!o.getFile(file))

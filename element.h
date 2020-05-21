@@ -14,12 +14,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include <algorithm>
 
 struct asyncDialog {
 	std::mutex mux;
 	std::condition_variable cond;
 	std::thread worker;
 	bool run;
+};
+
+struct fbx {
+	fbx(float offNormX, float offNormY, float sizeNormX, float sizeNormY) {
+		this->offNormX = offNormX;
+		this->offNormY = offNormY;
+		this->sizeNormX = sizeNormX;
+		this->sizeNormY = sizeNormY;
+	}
+	
+	float offNormX, offNormY, sizeNormX, sizeNormY;
 };
 
 struct mbx {
@@ -55,6 +67,15 @@ struct box {
 		this->offsety = b.offsety + b.getOffsetY(m.normy, m.sizey);
 	}
 	
+	box(fbx f) {
+		box b;
+		
+		this->sizex = b.sizex / (1.0f / f.sizeNormX);
+		this->sizey = b.sizey / (1.0f / f.sizeNormY);
+		this->offsetx = b.getOffsetX(f.offNormX, this->sizex);
+		this->offsety = b.getOffsetY(f.offNormY, this->sizey);
+	}
+	
 	box(box& box) {
 		this->offsetx = box.offsetx;
 		this->offsety = box.offsety;
@@ -62,10 +83,14 @@ struct box {
 		this->sizey = box.sizey;
 	}
 	box() {
-		sizex = adv::getOffsetX(0.5f);
-		offsetx = adv::getOffsetX(0.5f, sizex);
-		sizey = adv::getOffsetY(0.5f);
-		offsety = adv::getOffsetY(0.5f, sizey);
+		sizex = adv::width;
+		sizey = adv::height;
+		offsetx = 0;
+		offsety = 0;
+		//sizex = adv::getOffsetX(0.5f);
+		//offsetx = adv::getOffsetX(0.5f, sizex);
+		//sizey = adv::getOffsetY(0.5f);
+		//offsety = adv::getOffsetY(0.5f, sizey);
 	}
 	
 	box(int offsetx, int offsety, int sizex, int sizey) {
@@ -137,8 +162,8 @@ struct dialog : public box {
 	{}
 	
 	void fill(char c, char color) {
-		adv::fill(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, c, color);
-		//adv::fill(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1);
+		adv::fill(offsetx, offsety, offsetx + sizex, offsety + sizey, c, color);
+		//adv::fill(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, c, color);
 	}
 	
 	void border(char color) {
@@ -252,12 +277,12 @@ struct openFileDialog : public dialog {
 		listOffset = 0;
 		selected = 0;
 		getDirectoryFiles(".");
-		box tb(offsetx + 1, offsety + 1, sizex - 1, 1);
+		box tb(offsetx + 1, offsety + 1, sizex - 2, 1);
 		textBox search (tb);
 		
 		std::string buffer;
 		int key = 0;
-		
+		adv::setThreadState(false);
 		do {
 			switch (key) {				
 				case VK_BACKSPACE: {
@@ -304,10 +329,11 @@ struct openFileDialog : public dialog {
 			fill(' ', BWHITE | FBLACK);
 			border(BRED);
 			title("Open file", BRED);
-			displayFiles();
+			displayFiles(buffer);
 			search.show(buffer.c_str(), FRED | BBLACK | 0b00001000);
+			adv::draw();
 		} while ((key = console::readKey()) != VK_ESCAPE);
-		
+		adv::setThreadState(true);
 		return 0;
 	}	
 	
@@ -327,9 +353,30 @@ struct openFileDialog : public dialog {
 		else ot += "P";
 		return ot;
 	}
+
+	unsigned int edit_distance(const std::string& s1, const std::string& s2) {
+		const std::size_t len1 = s1.size(), len2 = s2.size();
+		std::vector<std::vector<unsigned int>> d(len1 + 1, std::vector<unsigned int>(len2 + 1));
+
+		d[0][0] = 0;
+		for(unsigned int i = 1; i <= len1; ++i) d[i][0] = i;
+		for(unsigned int i = 1; i <= len2; ++i) d[0][i] = i;
+
+		for(unsigned int i = 1; i <= len1; ++i)
+			for(unsigned int j = 1; j <= len2; ++j)
+						  // note that std::min({arg1, arg2, arg3}) works only in C++11,
+						  // for C++98 use std::min(std::min(arg1, arg2), arg3)
+						  d[i][j] = std::min({ d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 0 : 1) });
+		return d[len1][len2];
+	}
 	
-	void displayFiles() {
-		char safety[50];
+	void displayFiles(std::string& sort) {
+		std::vector<file> files = this->files;
+		if (sort.size() > 0) { //Levenstehen whatever it
+			 std::sort(files.begin(), files.end(), [&](file& a, file& b) {
+				return (edit_distance(a.name, sort) < edit_distance(b.name, sort));
+			 });
+		}
 		char buf[sizex + 2];
 		buf[sizex + 1] = '\0';
 		
