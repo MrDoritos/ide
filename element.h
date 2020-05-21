@@ -3,7 +3,11 @@
 #include <condition_variable>
 
 #include "advancedConsole.h"
+#ifdef __WIN32
 #include "dirent.h"
+#elif
+#include <dirent.h>
+#endif
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -125,11 +129,11 @@ struct dialog : public box {
 	{}
 	
 	fill(char c, char color) {
-		adv::fill(offsetx, offsety, offsetx + sizex, offsety + sizey, c, color);
+		adv::fill(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, c, color);
 	}
 	
-	border(char color) {
-		adv::border(offsetx, offsety, offsetx + sizex, offsety + sizey, color);
+	drawBorder(char color) {
+		adv::border(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, color);
 	}
 	
 	title(const char* title, char color) {
@@ -151,7 +155,7 @@ struct button : dialog {
 		//adv::fill(offsetx, offsety, offsetx + sizex, offsety + sizey, ' ', BWHITE);
 		fill(' ', BWHITE);
 		//adv::rectangle(offsetx, offsety, offsetx + sizex, offsety + sizey, ' ', FRED | BWHITE | 0b00001000);
-		border(FRED | 0b00001000 | BWHITE);
+		drawBorder(FRED | 0b00001000 | BWHITE);
 		int l = strlen(message);
 		adv::write(getOffsetX(0.5f, l) + offsetx, getOffsetY(0.5f) + offsety, message, color);
 	}
@@ -199,7 +203,7 @@ struct messageDialog : dialog {
 		//adv::fill(offsetx, offsety, offsetx + sizex, offsety + sizey, ' ', BWHITE);
 		fill(' ', BWHITE);
 		//adv::rectangle(offsetx, offsety, offsetx + sizex, offsety + sizey);
-		border(FRED | 0b00001000 | BWHITE);
+		drawBorder(FRED | 0b00001000 | BWHITE);
 		button ok({this, mbx{0.5f, 0.8f, 10, 5}});
 		ok.show("Ok", FRED | 0b00001000 | BWHITE);
 		int key;
@@ -247,6 +251,7 @@ struct openFileDialog : public dialog {
 		do {
 			switch (key) {				
 				case 8: {
+					if (buffer.length() > 0)
 					buffer.pop_back();
 					break;
 				}			
@@ -286,7 +291,7 @@ struct openFileDialog : public dialog {
 				}
 			}
 			fill(' ', BWHITE);
-			border(BRED);
+			drawBorder(BRED);
 			title("Open file", BRED);
 			displayFiles();
 			search.show(buffer.c_str(), FRED | BBLACK | 0b00001000);			
@@ -326,7 +331,7 @@ struct openFileDialog : public dialog {
 			buf[sizex - 1] = '\0';
 			int om = snprintf(&buf[0], sizex - 3, "[%c] %s", sel, f->name.c_str());
 			buf[om] = ' ';
-			om = snprintf(&buf[sizex - 5], sizex - 1, "%s", f->directory ? "D   " : toStorage(f->size).c_str());
+			om = snprintf(&buf[sizex - 6], sizex - 1, "%s", f->directory ? "D   " : toStorage(f->size).c_str());
 			char color = i == selected - listOffset ? BGREEN | FBLACK : BWHITE | FBLACK;
 			adv::write(offsetx + 1, offsety + i + 2, &buf[0], color);
 		}

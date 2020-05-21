@@ -13,7 +13,7 @@ int main() {
 	
 	adv::clear();
 	
-	openFileDialog o({0,0,99,99});
+	openFileDialog o({0,0,100,100});
 	std::string file;
 	if (!o.getFile(file))
 		puts("No file");
