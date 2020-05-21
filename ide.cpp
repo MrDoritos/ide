@@ -8,17 +8,21 @@ int main() {
 		adv::setDrawingMode(DRAWINGMODE_COMPARE);
 	}
 	
+	console::sleep(1000);
+
+	adv::allocate(); //Something buggy
+
 	//messageDialog m({});
 	//m.show("Hello world!");
 	
 	adv::clear();
 	
-	openFileDialog o({0,0,100,100});
+	openFileDialog o({10,10,80,40});
 	std::string file;
 	if (!o.getFile(file))
 		puts("No file");
 		
-	adv::_advancedConsoleDestruct();
+	//adv::_advancedConsoleDestruct();
 	
 	//puts(file.c_str());
 	
