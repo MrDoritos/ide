@@ -132,7 +132,7 @@ struct dialog : public box {
 		adv::fill(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, c, color);
 	}
 	
-	drawBorder(char color) {
+	border(char color) {
 		adv::border(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, color);
 	}
 	
@@ -155,7 +155,7 @@ struct button : dialog {
 		//adv::fill(offsetx, offsety, offsetx + sizex, offsety + sizey, ' ', BWHITE);
 		fill(' ', BWHITE);
 		//adv::rectangle(offsetx, offsety, offsetx + sizex, offsety + sizey, ' ', FRED | BWHITE | 0b00001000);
-		drawBorder(FRED | 0b00001000 | BWHITE);
+		border(FRED | 0b00001000 | BWHITE);
 		int l = strlen(message);
 		adv::write(getOffsetX(0.5f, l) + offsetx, getOffsetY(0.5f) + offsety, message, color);
 	}
@@ -203,7 +203,7 @@ struct messageDialog : dialog {
 		//adv::fill(offsetx, offsety, offsetx + sizex, offsety + sizey, ' ', BWHITE);
 		fill(' ', BWHITE);
 		//adv::rectangle(offsetx, offsety, offsetx + sizex, offsety + sizey);
-		drawBorder(FRED | 0b00001000 | BWHITE);
+		border(FRED | 0b00001000 | BWHITE);
 		button ok({this, mbx{0.5f, 0.8f, 10, 5}});
 		ok.show("Ok", FRED | 0b00001000 | BWHITE);
 		int key;
@@ -291,7 +291,7 @@ struct openFileDialog : public dialog {
 				}
 			}
 			fill(' ', BWHITE);
-			drawBorder(BRED);
+			border(BRED);
 			title("Open file", BRED);
 			displayFiles();
 			search.show(buffer.c_str(), FRED | BBLACK | 0b00001000);			
