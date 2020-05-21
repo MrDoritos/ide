@@ -46,13 +46,21 @@ struct box {
 		box(&b, m);
 	}
 	
+	box(mbx m) {
+		box b;
+		//box(b, m);
+		this->sizex = m.sizex;
+		this->sizey = m.sizey;
+		this->offsetx = b.offsetx + b.getOffsetX(m.normx, m.sizex);
+		this->offsety = b.offsety + b.getOffsetY(m.normy, m.sizey);
+	}
+	
 	box(box& box) {
 		this->offsetx = box.offsetx;
 		this->offsety = box.offsety;
 		this->sizex = box.sizex;
 		this->sizey = box.sizey;
 	}
-	
 	box() {
 		sizex = adv::getOffsetX(0.5f);
 		offsetx = adv::getOffsetX(0.5f, sizex);
@@ -128,15 +136,16 @@ struct dialog : public box {
 		:box(mbox)
 	{}
 	
-	fill(char c, char color) {
+	void fill(char c, char color) {
 		adv::fill(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, c, color);
+		//adv::fill(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1);
 	}
 	
-	border(char color) {
+	void border(char color) {
 		adv::border(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, color);
 	}
 	
-	title(const char* title, char color) {
+	void title(const char* title, char color) {
 		int l = strlen(title);
 		{
 			char buf[l + 3];
@@ -153,7 +162,7 @@ struct button : dialog {
 		
 	void show(const char* message, char color) {
 		//adv::fill(offsetx, offsety, offsetx + sizex, offsety + sizey, ' ', BWHITE);
-		fill(' ', BWHITE);
+		fill(' ', BWHITE | FBLACK);
 		//adv::rectangle(offsetx, offsety, offsetx + sizex, offsety + sizey, ' ', FRED | BWHITE | 0b00001000);
 		border(FRED | 0b00001000 | BWHITE);
 		int l = strlen(message);
@@ -175,7 +184,7 @@ struct textBox : dialog {
 	void show(const char* text, char color = FWHITE | BBLACK, int mode = TEXTMODE_END) {
 		fill(' ', color);
 		int l = strlen(text);
-		
+
 		if (l < sizex - 3) { //Fine, just show the text
 			adv::write(offsetx, offsety, text, color);
 		} else 
@@ -226,6 +235,7 @@ struct openFileDialog : public dialog {
 	openFileDialog(box box) : dialog(box) {
 		
 	}
+	
 	struct file {
 		bool selected;
 		bool highlighted;
@@ -250,9 +260,9 @@ struct openFileDialog : public dialog {
 		
 		do {
 			switch (key) {				
-				case 8: {
-					if (buffer.length() > 0)
-					buffer.pop_back();
+				case VK_BACKSPACE: {
+					if (buffer.size() > 0)
+						buffer.pop_back();
 					break;
 				}			
 				case VK_UP: {
@@ -284,18 +294,19 @@ struct openFileDialog : public dialog {
 					break;
 				}
 				default: {
+					//fprintf(stderr, "%i\r\n", key);
 					if (key < ' ' || key > '~')
 						break;
 					buffer += key;
 					break;
 				}
 			}
-			fill(' ', BWHITE);
+			fill(' ', BWHITE | FBLACK);
 			border(BRED);
 			title("Open file", BRED);
 			displayFiles();
-			search.show(buffer.c_str(), FRED | BBLACK | 0b00001000);			
-		} while ((key = console::readKey()) != 27);
+			search.show(buffer.c_str(), FRED | BBLACK | 0b00001000);
+		} while ((key = console::readKey()) != VK_ESCAPE);
 		
 		return 0;
 	}	
@@ -318,6 +329,7 @@ struct openFileDialog : public dialog {
 	}
 	
 	void displayFiles() {
+		char safety[50];
 		char buf[sizex + 2];
 		buf[sizex + 1] = '\0';
 		
@@ -331,7 +343,7 @@ struct openFileDialog : public dialog {
 			buf[sizex - 1] = '\0';
 			int om = snprintf(&buf[0], sizex - 3, "[%c] %s", sel, f->name.c_str());
 			buf[om] = ' ';
-			om = snprintf(&buf[sizex - 6], sizex - 1, "%s", f->directory ? "D   " : toStorage(f->size).c_str());
+			om = snprintf(&buf[sizex - 6 < 0 ? 0 : sizex - 6], sizex - 1, "%s", f->directory ? "D   " : toStorage(f->size).c_str());
 			char color = i == selected - listOffset ? BGREEN | FBLACK : BWHITE | FBLACK;
 			adv::write(offsetx + 1, offsety + i + 2, &buf[0], color);
 		}

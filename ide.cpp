@@ -7,17 +7,20 @@ int main() {
 	if (console::getImage() == IMAGE_LINUX) {
 		adv::setDrawingMode(DRAWINGMODE_COMPARE);
 	}
-	
-	console::sleep(1000);
 
-	adv::allocate(); //Something buggy
+	//raw();
+	//keypad(stdscr, 1);
+
+	//adv::allocate(); //Something buggy
 
 	//messageDialog m({});
 	//m.show("Hello world!");
 	
 	adv::clear();
 	
-	openFileDialog o({10,10,80,40});
+	//openFileDialog o({mbx{0.5f, 0.5f, 30, 30}});
+	openFileDialog o({10, 10, 40, 30});
+	//openFileDialog o({adv::width / 2, adv::height / 2, 20, 20});
 	std::string file;
 	if (!o.getFile(file))
 		puts("No file");
