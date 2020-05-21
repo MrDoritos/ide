@@ -5,7 +5,7 @@
 #include "advancedConsole.h"
 #ifdef __WIN32
 #include "dirent.h"
-#elif
+#elif defined __linux__
 #include <dirent.h>
 #endif
 #include <unistd.h>
