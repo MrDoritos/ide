@@ -162,8 +162,12 @@ struct dialog : public box {
 	{}
 	
 	void fill(char c, char color) {
+		//for (int x = offsetx; x < offsetx + sizex; x++) {
+		//	for (int y = offsety; y < offsety + sizey; y++) {
+		//		adv::write(x, y, c, color);
+		//	}
+		//}
 		adv::fill(offsetx, offsety, offsetx + sizex, offsety + sizey, c, color);
-		//adv::fill(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, c, color);
 	}
 	
 	void border(char color) {
@@ -255,10 +259,36 @@ struct messageDialog : dialog {
 };
 
 struct openFileDialog : public dialog {
-	openFileDialog() {}
+	openFileDialog() {
+		setDirectory(".");
+		setListOffset(0);
+		setSelected(0);
+	}
 	
 	openFileDialog(box box) : dialog(box) {
-		
+		setDirectory(".");
+		setListOffset(0);
+		setSelected(0);
+	}
+	
+	void setListOffset(int x) {
+		listOffset = x;
+	}
+	int getListOffset() {
+		return listOffset;
+	}
+	void setDirectory(std::string dir) {
+		getDirectoryFiles(dir.c_str());
+	}
+	int getSelected() {
+		return selected;
+	}
+	void setSelected(int sel) {
+		if (sel < files.size())
+			selected = sel;
+	}
+	void getDirectory(std::string& dir) {
+		dir = directory;
 	}
 	
 	struct file {
@@ -274,9 +304,9 @@ struct openFileDialog : public dialog {
 	int selected;
 	
 	int getFile(std::string& f) {
-		listOffset = 0;
-		selected = 0;
-		getDirectoryFiles(".");
+		//listOffset = 0;
+		//selected = 0;
+		//getDirectoryFiles(".");
 		box tb(offsetx + 1, offsety + 1, sizex - 2, 1);
 		textBox search (tb);
 		
@@ -307,6 +337,8 @@ struct openFileDialog : public dialog {
 						selected = 0;
 					} else {
 						//We selected files
+						f = files[selected].fullpath;
+						return 1;
 					}
 					break;
 				}
@@ -478,4 +510,69 @@ struct saveFileDialog {
 	std::string getFile() {
 		
 	}
+};
+
+struct line {
+	std::string buffer;
+};
+
+struct textEditor : dialog {
+	textEditor() {}
+	textEditor(box box) : dialog(box) {}
+	#define MAXLINELEN 4096
+	void load(FILE* handle) {
+		char b;
+		char buffer[MAXLINELEN];
+		int r = 0;
+		lines.clear();
+		int i = 0;
+		
+		while ((fread(&b, 1, 1, handle)) != EOF) {
+			if (b == '\n') { //New unix line
+				line bl;
+				bl.buffer = std::string(&buffer[0], r);
+				r = 0;
+				lines.push_back(bl);
+				if (i++ > 20)
+					break;
+			} else {
+				if (r >= MAXLINELEN)
+					break;
+				buffer[r++] = b;
+			}
+		}
+	}
+	
+	void save(FILE* handle) {
+	
+	}
+	
+	void drawLine(line* line, int lineNumber, int x, int y, int maxX) {
+		char buf[maxX];
+		snprintf(&buf[0], maxX, "%i : %s", lineNumber, line->buffer.c_str());
+		adv::write(x, y, &buf[0], FRED | BWHITE);
+	}
+	
+	void show() {
+		int key = 0;
+		do {
+			fill(' ', BWHITE | FBLACK);
+			border(FBLACK | BRED);
+			title("File", BRED | FBLACK);
+			draw();
+			adv::draw();
+		} while ((key = console::readKey()) != VK_ESCAPE);
+	}
+	
+	void draw() {
+		for (int y = offsety + 1; y < sizey + offsety - 2; y++) {
+			int lineNumber = y - offsety - 1;
+			if (lineNumber >= lines.size())
+				break;
+			
+			drawLine(&lines[lineNumber], lineNumber, offsetx + 1, y, sizex - 2);
+		}
+	}
+	
+	std::vector<line> lines;
 };

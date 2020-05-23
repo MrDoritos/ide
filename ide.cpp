@@ -5,7 +5,7 @@ int main() {
 	while (!adv::ready);
 	
 	if (console::getImage() == IMAGE_LINUX) {
-		adv::setDrawingMode(DRAWINGMODE_COMPARE);
+		//adv::setDrawingMode(DRAWINGMODE_COMPARE);
 	}
 
 	//raw();
@@ -17,14 +17,21 @@ int main() {
 	//m.show("Hello world!");
 	
 	adv::clear();
-	
+	int sel = 0,off = 0;
 	//openFileDialog o({{}, mbx{0.5f, 0.5f, 30, 30}});
 	openFileDialog o({fbx{0.5f,0.5f,0.75f,0.75f}});
 	//openFileDialog o({10, 10, 40, 30});
 	//openFileDialog o({adv::width / 2, adv::height / 2, 20, 20});
 	std::string file;
-	if (!o.getFile(file))
-		puts("No file");
+	while (o.getFile(file)) {
+		//We gots a file
+		FILE* handle = fopen(file.c_str(), "r");
+		textEditor b({fbx{0.7f, 0.5f, 0.5f, 0.5f}});
+		b.load(handle);
+		b.show();
+		adv::clear();
+	
+	}
 		
 	//adv::_advancedConsoleDestruct();
 	
