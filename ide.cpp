@@ -23,6 +23,7 @@ int main() {
 	//openFileDialog o({10, 10, 40, 30});
 	//openFileDialog o({adv::width / 2, adv::height / 2, 20, 20});
 	std::string file;
+	//adv::setThreadState(false);
 	while (o.getFile(file)) {
 		//We gots a file
 		FILE* handle = fopen(file.c_str(), "r");

@@ -365,7 +365,7 @@ struct openFileDialog : public dialog {
 			search.show(buffer.c_str(), FRED | BBLACK | 0b00001000);
 			adv::draw();
 		} while ((key = console::readKey()) != VK_ESCAPE);
-		adv::setThreadState(true);
+		//adv::setThreadState(true);
 		return 0;
 	}	
 	
