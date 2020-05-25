@@ -174,6 +174,10 @@ struct dialog : public box {
 		adv::border(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, color);
 	}
 	
+	void fancyBorder(int type, char color) {
+		adv::fancyBorder(offsetx, offsety, offsetx + sizex - 1, offsety + sizey - 1, type, color);
+	}
+	
 	void title(const char* title, char color) {
 		int l = strlen(title);
 		{
