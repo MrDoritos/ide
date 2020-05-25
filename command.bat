@@ -3,7 +3,7 @@ cd /D "H:\cpp-projects\ide"
 CALL ..\libs.bat
 echo %CD%
 
-cmd /c g++ ide.cpp -I%CONSOLE% %WCONSOLE% -o ide.exe -w -g
+cmd /c g++ ide.cpp %ADV% -I%CONSOLE% %WCONSOLE% -Iwindows -o ide.exe -w -g
 if "%errorlevel%" NEQ "0" (
 pause
 exit /b
