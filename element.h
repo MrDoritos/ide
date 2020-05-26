@@ -265,12 +265,16 @@ struct messageDialog : dialog {
 struct openFileDialog : public dialog {
 	openFileDialog() {
 		setDirectory(".");
+		lastDirectory = ".";
+		lastSelected = 0;
 		setListOffset(0);
 		setSelected(0);
 	}
 	
 	openFileDialog(box box) : dialog(box) {
 		setDirectory(".");
+		lastDirectory = ".";
+		lastSelected = 0;
 		setListOffset(0);
 		setSelected(0);
 	}
@@ -304,8 +308,10 @@ struct openFileDialog : public dialog {
 		bool directory;
 	};
 	std::string directory;
+	std::string lastDirectory;
 	int listOffset;
 	int selected;
+	int lastSelected;
 	
 	int getFile(std::string& f) {
 		//listOffset = 0;
@@ -313,6 +319,7 @@ struct openFileDialog : public dialog {
 		//getDirectoryFiles(".");
 		box tb(offsetx + 1, offsety + 1, sizex - 2, 1);
 		textBox search (tb);
+		textBox curDir ({offsetx + 1, offsety + sizey - 2, sizex - 2, 1});
 		
 		std::string buffer;
 		int key = 0;
@@ -334,11 +341,52 @@ struct openFileDialog : public dialog {
 					break;
 				}
 				case VK_RETURN: {
+					if (buffer.size() > 0) {
+						struct stat info;
+						
+						if (stat(buffer.c_str(), &info) != 0) {
+							//Neither file or directory	
+							//Use levenstein distance
+							std::vector<file> files = this->files;
+							std::sort(files.begin(), files.end(), [&](file& a, file& b) {
+								return (edit_distance(a.name, buffer) < edit_distance(b.name, buffer));
+							});		
+							buffer.clear();
+							if (files[0].directory) {
+								lastDirectory = directory;
+								lastSelected = selected;
+								getDirectoryFiles(files[0].fullpath.c_str());
+								selected = 0;
+								break;
+							} else {
+								f = files[0].fullpath;
+								return -1;
+							}
+							
+						} else {
+							if (info.st_mode & S_IFDIR) {
+								lastDirectory = directory;
+								lastSelected = selected;
+								selected = 0;
+								getDirectoryFiles(buffer.c_str());
+								buffer.clear();
+								break;
+							} else {
+								f = buffer;
+								return 1;
+							}
+						}
+					}
+					
+					
 					if (files[selected].directory) {				
 						//messageDialog b;
 						//b.show("Opened: " + files[selected].fullpath);	
+								lastDirectory = directory;
+								lastSelected = selected;
 						getDirectoryFiles(files[selected].fullpath.c_str());
 						selected = 0;
+						break;
 					} else {
 						//We selected files
 						f = files[selected].fullpath;
@@ -346,9 +394,40 @@ struct openFileDialog : public dialog {
 					}
 					break;
 				}
-				case VK_LEFT:
+				case VK_HOME: {
+						listOffset = 0;
+						selected = 0;
+					break;
+				}
+				case VK_END: {					
+						selected = files.size() - 1;
+						if (listOffset > sizey - 2 - files.size()) listOffset = 0;
+						else listOffset = selected > 5 ? selected - 5 : 0;
+					break;
+				}				
+				case VK_LEFT: {
+						lastDirectory = directory;
+						lastSelected = selected;
+						getDirectoryFiles(files[1].fullpath.c_str());
+						selected = 0;
+					break;
+				}
 				case VK_RIGHT: {
-					files[selected].selected = !files[selected].selected;
+						if (files[selected].name == "." || !files[selected].directory) {
+							getDirectoryFiles(lastDirectory.c_str());
+							directory = lastDirectory;
+							selected = lastSelected;
+						} else
+							if (files[selected].directory) {
+								lastDirectory = directory;
+								lastSelected = selected;
+								getDirectoryFiles(files[selected].fullpath.c_str());
+								selected = 0;								
+						}
+					break;
+				}
+				case VK_INSERT: {
+						files[selected].selected = !files[selected].selected;
 					break;
 				}
 				case 0: {
@@ -368,6 +447,7 @@ struct openFileDialog : public dialog {
 			title("Open file", BRED);
 			displayFiles(buffer);
 			search.show(buffer.c_str(), FRED | BBLACK | 0b00001000);
+			curDir.show(directory.c_str(), FRED | BWHITE);
 			adv::draw();
 		} while (NOMOD(key = console::readKey()) != VK_ESCAPE);
 		//adv::setThreadState(true);
@@ -416,8 +496,10 @@ struct openFileDialog : public dialog {
 		char buf[sizex + 2];
 		buf[sizex + 1] = '\0';
 		
-		if (listOffset > sizey - 2 - files.size()) listOffset = 0;
-		else listOffset = selected > 5 ? selected - 5 : 0;
+		if (listOffset > sizey - 2) 
+			listOffset = 0;
+		else
+			listOffset = selected > 4 ? selected - 5 : 0;
 		
 		for (int i = 0; i < sizey - 3 && i < files.size() - listOffset; i++) {
 			file* f = &files[i + listOffset];
@@ -527,24 +609,34 @@ struct textEditor : dialog {
 	void load(FILE* handle) {
 		char b;
 		char buffer[MAXLINELEN];
+		memset(buffer, '\0', MAXLINELEN);
 		int r = 0;
 		lines.clear();
 		int i = 0;
 		
+		line bl;
+		
 		while ((fread(&b, 1, 1, handle)) > 0) {
-			if (b == '\n') { //New unix line
-				line bl;
+			if (b == '\n' || b == '\r') { //New unix line
+				if (b == '\r')
+					continue;
 				bl.buffer = std::string(&buffer[0], r);
 				r = 0;
 				lines.push_back(bl);
-				//if (i++ > 20)
-				//	break;
 			} else {
-				if (r >= MAXLINELEN)
-					break;
+				if (r >= MAXLINELEN) {
+					bl.buffer = std::string(&buffer[0], r);
+					r = 0;
+					lines.push_back(bl);
+					break;					
+				}
 				buffer[r++] = b;
 			}
 		}
+		
+		bl.buffer = std::string(&buffer[0], r);
+		r = 0;
+		lines.push_back(bl);
 	}
 	
 	void save(FILE* handle) {
@@ -553,15 +645,39 @@ struct textEditor : dialog {
 	
 	void drawLine(line* line, int lineNumber, int x, int y, int maxX) {
 		char buf[maxX];
-		snprintf(&buf[0], maxX, "%i : %s", lineNumber, line->buffer.c_str());
-		adv::write(x, y, &buf[0], FRED | BWHITE);
+		std::string nBuf = line->buffer;
+		//Do replacements
+		int pos;
+		while ((pos = nBuf.find('\t')) != std::string::npos) {
+			nBuf.replace(pos, 1, " ");
+		}
+
+		int cBufLen = nBuf.size();
+		{
+			char colorBuffer[cBufLen];
+			memset(colorBuffer, FBLUE | BWHITE, cBufLen); //Default text color
+			//Do type highlighting
+			
+			
+			//Line number
+			int cnt = snprintf(&buf[0], maxX, "%i : \n", lineNumber);
+			int cnt2 =snprintf(&buf[cnt-1],maxX-cnt+1,"%s", nBuf.c_str());
+			int cnt3 = cnt+cnt2;
+			//Prepare to print
+			{
+				char cbuf2[cnt3];
+				memset(cbuf2, FRED | BWHITE, cnt3);
+				memcpy(&cbuf2[cnt-1], colorBuffer, cBufLen);
+				adv::write(x, y, &buf[0], &cbuf2[0]);
+			}
+		}
 	}
 	
 	void show() {
 		int key = 0;
 		do {
 			fill(' ', BWHITE | FBLACK);
-			border(FBLACK | BRED);
+			fancyBorder(BORDER_LINE, FBLACK | BRED);
 			title("File", BRED | FBLACK);
 			draw();
 			adv::draw();
@@ -569,12 +685,12 @@ struct textEditor : dialog {
 	}
 	
 	void draw() {
-		for (int y = offsety + 1; y < sizey + offsety - 2; y++) {
+		for (int y = offsety + 1; y < sizey + offsety - 1; y++) {
 			int lineNumber = y - offsety - 1;
 			if (lineNumber >= lines.size())
 				break;
 			
-			drawLine(&lines[lineNumber], lineNumber, offsetx + 1, y, sizex - 2);
+			drawLine(&lines[lineNumber], lineNumber, offsetx + 1, y, sizex - 1);
 		}
 	}
 	
