@@ -603,8 +603,16 @@ struct line {
 };
 
 struct textEditor : dialog {
-	textEditor() {}
-	textEditor(box box) : dialog(box) {}
+	textEditor() {
+		lineOffset = 0;
+		column = 0;
+		row = 0;		
+	}
+	textEditor(box box) : dialog(box) {
+		lineOffset = 0;
+		column = 0;
+		row = 0;	
+	}
 	#define MAXLINELEN 4096
 	void load(FILE* handle) {
 		char b;
@@ -672,13 +680,71 @@ struct textEditor : dialog {
 			}
 		}
 	}
+
+	int row;
+	int column;
+	int lineOffset;
 	
 	void show() {
+		char buf[50];
 		int key = 0;
 		do {
+			switch (NOMOD(key)) {
+				case VK_ENTER: {
+					if (row < lines.size() - 1) {
+						
+					} else {
+						line l;
+						lines.push_back(l);
+					}
+					row++;					
+					break;
+				}
+				case VK_DOWN: {
+					if (row < lines.size() - 1) 
+						row++;
+					break;
+				}
+				case VK_UP: {
+					if (row > 0)
+						row--;
+					break;
+				}
+				case VK_LEFT: {
+					if (column > 0)
+						column--;
+					break;
+				}
+				case VK_RIGHT: {
+					column++;
+				}
+				case VK_BACKSPACE: {
+					if (lines[row].buffer.size() > 0) {
+						lines[row].buffer.pop_back();
+					}
+				}
+				default: {
+					//fprintf(stderr, "%i\r\n", key);
+					if (NOMOD(key) < ' ' || NOMOD(key) > '~')
+						break;
+					if (column > lines[row].buffer.size()) {
+						//lines[row].buffer += char(NOMOD(key));
+						lines[row].buffer.push_back(char(NOMOD(key)));
+					} else {
+						//lines[row].buffer.insert(column,char(NOMOD(key)), 1);
+						lines[row].buffer.push_back(char(NOMOD(key)));
+					}
+					column++;
+					//buffer += key;
+					
+					break;
+				}
+			}
+			
 			fill(' ', BWHITE | FBLACK);
-			fancyBorder(BORDER_LINE, FBLACK | BRED);
-			title("File", BRED | FBLACK);
+			fancyBorder(BORDER_LINE, FBLACK | BRED);			
+			snprintf(&buf[0],50,"File (%i:%i)", row, column);
+			title(&buf[0], BRED | FBLACK);
 			draw();
 			adv::draw();
 		} while (NOMOD(key = console::readKey()) != VK_ESCAPE);
