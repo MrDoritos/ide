@@ -251,7 +251,7 @@ struct messageDialog : dialog {
 		int key;
 		textBox tb({});
 		tb.show(message, FRED | 0b00001000 | BWHITE);
-		while ((key = console::readKey()) != ' ' && key != VK_ENTER && key != VK_ESCAPE);
+		while (NOMOD(key = console::readKey()) != ' ' && NOMOD(key) != VK_ENTER && NOMOD(key) != VK_ESCAPE);
 	}
 	
 	void show(const std::string string) {
@@ -298,7 +298,7 @@ struct openFileDialog : public dialog {
 	struct file {
 		bool selected;
 		bool highlighted;
-		long size;
+		size_t size;
 		std::string name;
 		std::string fullpath;
 		bool directory;
@@ -318,7 +318,7 @@ struct openFileDialog : public dialog {
 		int key = 0;
 		adv::setThreadState(false);
 		do {
-			switch (key) {				
+			switch (NOMOD(key)) {				
 				case VK_BACKSPACE: {
 					if (buffer.size() > 0)
 						buffer.pop_back();
@@ -363,30 +363,30 @@ struct openFileDialog : public dialog {
 				}
 			}
 			fill(' ', BWHITE | FBLACK);
-			border(BRED);
+			//border(BRED);
+			fancyBorder(BORDER_DOUBLE, BRED|FBLACK);
 			title("Open file", BRED);
 			displayFiles(buffer);
 			search.show(buffer.c_str(), FRED | BBLACK | 0b00001000);
 			adv::draw();
-		} while ((key = console::readKey()) != VK_ESCAPE);
+		} while (NOMOD(key = console::readKey()) != VK_ESCAPE);
 		//adv::setThreadState(true);
 		return 0;
 	}	
 	
 	std::string toStorage(size_t length) {
-		std::string l = std::to_string(length);
+		const char* units[] = {"B", "K", "M", "G", "T", "P","E","Y","Z"};
+		int i = 0;
+		double size = length;
+		while (size > 1000) {
+			size /= 1000;
+			i++;
+		}		
 		std::string ot;
-		for (int i = 0; i < 3; i++)
-			if (i < l.length())
-				ot += l[i];
-			else 
-				ot += " ";
-		if (length < 1000)		   ot += "B";
-		else if (length < 1000000) ot += "K";
-		else if (length < 1000000000) ot += "M";
-		else if (length < 1000000000000) ot += "G";
-		else if (length < 1000000000000000) ot += "T";
-		else ot += "P";
+		char buf[50];
+		snprintf(&buf[0], 50, "%i   ", int(size));
+		snprintf(&buf[3], 40, "%s", units[i]);
+		ot = std::string(buf);
 		return ot;
 	}
 
@@ -531,14 +531,14 @@ struct textEditor : dialog {
 		lines.clear();
 		int i = 0;
 		
-		while ((fread(&b, 1, 1, handle)) != EOF) {
+		while ((fread(&b, 1, 1, handle)) > 0) {
 			if (b == '\n') { //New unix line
 				line bl;
 				bl.buffer = std::string(&buffer[0], r);
 				r = 0;
 				lines.push_back(bl);
-				if (i++ > 20)
-					break;
+				//if (i++ > 20)
+				//	break;
 			} else {
 				if (r >= MAXLINELEN)
 					break;
@@ -565,7 +565,7 @@ struct textEditor : dialog {
 			title("File", BRED | FBLACK);
 			draw();
 			adv::draw();
-		} while ((key = console::readKey()) != VK_ESCAPE);
+		} while (NOMOD(key = console::readKey()) != VK_ESCAPE);
 	}
 	
 	void draw() {

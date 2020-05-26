@@ -1,7 +1,11 @@
 #include "advancedConsole.h"
 #include "element.h"
 
+#ifdef __WIN32
+int wmain() {
+#elif defined __linux__
 int main() {
+#endif
 	while (!adv::ready);
 	
 	if (console::getImage() == IMAGE_LINUX) {
