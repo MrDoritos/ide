@@ -30,9 +30,9 @@ int main() {
 	//adv::setThreadState(false);
 	while (o.getFile(file)) {
 		//We gots a file
-		FILE* handle = fopen(file.c_str(), "r");
-		textEditor b({fbx{0.7f, 0.5f, 0.5f, 0.5f}});
-		b.load(handle);
+		FILE* handle = fopen(file.c_str(), "rw");
+		textEditor b(handle, {fbx{0.7f, 0.5f, 0.5f, 0.5f}});
+		b.load();
 		b.show();
 		adv::clear();
 	
@@ -44,5 +44,5 @@ int main() {
 	
 	//while (console::readKey()!=27);
 	
-	return 0;
+	return 1;
 }

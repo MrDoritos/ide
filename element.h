@@ -603,18 +603,24 @@ struct line {
 };
 
 struct textEditor : dialog {
-	textEditor() {
+	textEditor(FILE* handle) {
+		this->handle = handle;
 		lineOffset = 0;
 		column = 0;
 		row = 0;		
+		modified = false;
 	}
-	textEditor(box box) : dialog(box) {
+	textEditor(FILE* handle, box box) : dialog(box) {
+		this->handle = handle;
 		lineOffset = 0;
 		column = 0;
 		row = 0;	
+		modified = false;
 	}
+	FILE* handle;
+	
 	#define MAXLINELEN 4096
-	void load(FILE* handle) {
+	void load() {
 		char b;
 		char buffer[MAXLINELEN];
 		memset(buffer, '\0', MAXLINELEN);
@@ -647,8 +653,11 @@ struct textEditor : dialog {
 		lines.push_back(bl);
 	}
 	
-	void save(FILE* handle) {
-	
+	void save() {
+		for (auto& line : lines) {
+			std::string str = line.buffer + "\r\n";
+			fwrite(str.c_str(), 1, str.size(), handle);
+		}
 	}
 	
 	void drawLine(line* line, int lineNumber, int x, int y, int maxX) {
@@ -658,6 +667,7 @@ struct textEditor : dialog {
 		int pos;
 		while ((pos = nBuf.find('\t')) != std::string::npos) {
 			nBuf.replace(pos, 1, " ");
+			nBuf.insert(pos, "   ");
 		}
 
 		int cBufLen = nBuf.size();
@@ -684,66 +694,76 @@ struct textEditor : dialog {
 	int row;
 	int column;
 	int lineOffset;
+	bool modified;
 	
 	void show() {
 		char buf[50];
 		int key = 0;
-		do {
-			switch (NOMOD(key)) {
-				case VK_ENTER: {
-					if (row < lines.size() - 1) {
-						
-					} else {
-						line l;
-						lines.push_back(l);
-					}
-					row++;					
-					break;
-				}
-				case VK_DOWN: {
-					if (row < lines.size() - 1) 
-						row++;
-					break;
-				}
-				case VK_UP: {
-					if (row > 0)
-						row--;
-					break;
-				}
-				case VK_LEFT: {
-					if (column > 0)
-						column--;
-					break;
-				}
-				case VK_RIGHT: {
-					column++;
-				}
-				case VK_BACKSPACE: {
-					if (lines[row].buffer.size() > 0) {
-						lines[row].buffer.pop_back();
-					}
-				}
-				default: {
-					//fprintf(stderr, "%i\r\n", key);
-					if (NOMOD(key) < ' ' || NOMOD(key) > '~')
+		do {			
+			fprintf(stderr, "%i\r\n", key);
+			if (!HASMOD(key, __CTRL)) {
+				switch (NOMOD(key)) {
+					case VK_ENTER: {
+						if (row < lines.size() - 1) {
+							
+						} else {
+							line l;
+							lines.push_back(l);
+						}
+						row++;					
 						break;
-					if (column > lines[row].buffer.size()) {
-						//lines[row].buffer += char(NOMOD(key));
-						lines[row].buffer.push_back(char(NOMOD(key)));
-					} else {
-						//lines[row].buffer.insert(column,char(NOMOD(key)), 1);
-						lines[row].buffer.push_back(char(NOMOD(key)));
 					}
-					column++;
-					//buffer += key;
-					
-					break;
+					case VK_DOWN: {
+						if (row < lines.size() - 1) 
+							row++;
+						break;
+					}
+					case VK_UP: {
+						if (row > 0)
+							row--;
+						break;
+					}
+					case VK_LEFT: {
+						if (column > 0)
+							column--;
+						break;
+					}
+					case VK_RIGHT: {
+						column++;
+					}
+					case VK_BACKSPACE: {
+						if (lines[row].buffer.size() > 0) {
+							lines[row].buffer.pop_back();
+							modified = true;
+						}
+					}
+					default: {
+						//fprintf(stderr, "%i\r\n", key);
+						if (NOMOD(key) < ' ' || NOMOD(key) > '~')
+							break;
+						if (column > lines[row].buffer.size()) {
+							//lines[row].buffer += char(NOMOD(key));
+							lines[row].buffer.push_back(char(NOMOD(key)));
+						} else {
+							//lines[row].buffer.insert(column,char(NOMOD(key)), 1);
+							lines[row].buffer.push_back(char(NOMOD(key)));
+						}
+						column++;
+						modified = true;
+						//buffer += key;
+						
+						break;
+					}
 				}
 			}
+			if (HASMOD(key, __CTRL) && (HASKEY(key, 's') || HASKEY(key, 'S'))) {
+				save();
+				modified = false;
+			}			
 			
 			fill(' ', BWHITE | FBLACK);
 			fancyBorder(BORDER_LINE, FBLACK | BRED);			
-			snprintf(&buf[0],50,"File (%i:%i)", row, column);
+			snprintf(&buf[0],50,"File (%i:%i)%c", row, column, modified ? '*' : ' ');
 			title(&buf[0], BRED | FBLACK);
 			draw();
 			adv::draw();
