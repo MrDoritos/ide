@@ -19,9 +19,12 @@ int main() {
 	nE.setc(0.0f,1.0f);
 	nE.add(tE);
 	
-	wscreen.start();
+	std::thread screen_thread(screen::start, &wscreen);
+	//wscreen.start();
 	
 	tE.run();
+	
+	screen_thread.join();
 	
 	/*
 	while (!adv::ready);
