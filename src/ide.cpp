@@ -12,7 +12,7 @@ int main() {
 	s_screen = &wscreen;
 	//textbox n(s_screen);
 	//terminalElement tE;
-	programRunner tE("echo", "Hello World!");
+	programRunner tE("find", "..");
 	nullElement nE;
 	
 	wscreen.child->add(&nE);

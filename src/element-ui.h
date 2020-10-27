@@ -116,6 +116,8 @@ struct terminalElement : public helperElement<terminalElement> {
 					break;
 				case '\n':
 					terminalNewLine();
+					//Linux does not use carriage return
+					xCur = 0;
 					break;
 				default:
 					if (xCur + 1 > getSizeX()) {
@@ -145,7 +147,7 @@ struct programRunner : terminalElement {
 	{	}
 	
 	int run() {
-		fprintf(stderr, "Running %s %s\r\n", path, args);
+		//fprintf(stderr, "Running %s %s\r\n", path, args);
 		char buffer[128];
 		std::string strPath = std::string(path);
 		std::string strArgs = std::string(args);
@@ -156,7 +158,7 @@ struct programRunner : terminalElement {
 			terminalWriteLine("Internal: popen failed");
 			return -1;			
 		} else {
-			fprintf(stderr, "Running...\r\n");
+			//fprintf(stderr, "Running...\r\n");
 		}
 		
 		while (!feof(pipe)) {
@@ -165,7 +167,7 @@ struct programRunner : terminalElement {
 			}
 		}
 		
-		fprintf(stderr, "Finished Execution of Sub Process\r\n");
+		//fprintf(stderr, "Finished Execution of Sub Process\r\n");
 		
 		pclose(pipe);
 		return 0;
