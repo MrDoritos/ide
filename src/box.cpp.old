@@ -1,0 +1,138 @@
+#include "advancedConsole.h"
+#include "box.h"
+
+fbx::fbx(float offNormX, float offNormY, float sizeNormX, float sizeNormY) {
+	this->offNormX = offNormX;
+	this->offNormY = offNormY;
+	this->sizeNormX = sizeNormX;
+	this->sizeNormY = sizeNormY;
+}
+
+mbx::mbx(float normx, float normy, int sizex, int sizey) {	
+	this->normx = normx;
+	this->normy = normy;
+	this->sizex = sizex;
+	this->sizey = sizey;
+}
+
+box::box(box* b, mbx m) {
+	this->sizex = m.sizex;
+	this->sizey = m.sizey;
+	this->offsetx = b->offsetx + b->getOffsetX(m.normx, m.sizex);
+	this->offsety = b->offsety + b->getOffsetY(m.normy, m.sizey);
+}
+
+box::box(box b, mbx m) {
+	box(&b, m);	
+}
+
+box::box(mbx m) {
+	box b;
+	
+	this->sizex = m.sizex;
+	this->sizey = m.sizey;
+	this->offsetx = b.offsetx + b.getOffsetX(m.normx, m.sizex);
+	this->offsety = b.offsety + b.getOffsetY(m.normy, m.sizey);
+}
+
+box::box(fbx f) {
+	box b;		
+	
+	this->sizex = b.sizex / (1.0f / f.sizeNormX);
+	this->sizey = b.sizey / (1.0f / f.sizeNormY);
+	this->offsetx = b.getOffsetX(f.offNormX, this->sizex);
+	this->offsety = b.getOffsetY(f.offNormY, this->sizey);
+}
+
+box::box(box& box) {
+	this->offsetx = box.offsetx;
+	this->offsety = box.offsety;
+	this->sizex = box.sizex;
+	this->sizey = box.sizey;
+}
+
+box::box() {
+	sizex = adv::width;
+	sizey = adv::height;
+	offsetx = 0;
+	offsety = 0;
+}
+
+box::box(int offsetx, int offsety, int sizex, int sizey) {
+	this->offsetx = offsetx;
+	this->offsety = offsety;
+	this->sizex = sizex;
+	this->sizey = sizey;
+}
+
+int box::get(int x, int y) {
+	int cx = x + offsetx;
+	int cy = y + offsety;
+	return (cy * adv::width) + cx;	
+}
+
+bool box::bound(int x, int y) {
+	if (offsetx > x || sizex <= x)
+		return false;
+	if (offsety > y || sizey <= y)
+		return false;
+	return true;
+}
+
+int box::getOffsetX(float scale) {
+	return getOffsetX(scale, 0);
+}
+
+int box::getOffsetY(float scale) {
+	return getOffsetY(scale, 0);
+}
+
+int box::getOffsetX(float scale, float length) {
+	if (length < 1) {
+		return (float(sizex) * scale);
+	}
+	if (length > sizex)
+		return 0.0f;
+	
+	return (float(sizex) * scale) - (length / 2);
+}
+
+int box::getOffsetY(float scale, float length) {
+	if (length < 1) {
+		return (float(sizey) * scale);
+	}
+	if (length > sizey)
+		return 0.0f;
+	
+	return (float(sizey) * scale) - (length / 2);
+}
+
+void box::clip(int &x, int &y) {
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

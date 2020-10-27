@@ -3,6 +3,7 @@ set (PROJECT_NAME ide)
 project (${PROJECT_NAME} VERSION 1.0)
 
 FILE(GLOB SOURCE_FILES src/*.cpp)
+FILE(GLOB UI_FILES ../console-ui/*.cpp)
 
 #add_subdirectory(../console)
 #add_subdirectory(../console-ui)
@@ -13,11 +14,18 @@ set(CONSOLEUI_INCLUDE_PATH "../console-ui")
 include_directories(${CONSOLE_INCLUDE_PATH})
 include_directories(${CONSOLEUI_INCLUDE_PATH})
 
+add_definitions(-w)
+add_definitions(-fpermissive)
+add_definitions(-ggdb)
+add_definitions(-std=c++11)
+add_definitions(-U__STRICT_ANSI__)
+
 if(MINGW)
 include_directories(src/windows)
 add_executable(
 		${PROJECT_NAME} 
 		${SOURCE_FILES}
+		${UI_FILES}
 		../console/advancedConsole.cpp
 		../console/console.windows.cpp
 		)
@@ -29,6 +37,7 @@ if(UNIX)
 add_executable(
 		${PROJECT_NAME} 
 		${SOURCE_FILES}
+		${UI_FILES}
 		../console/advancedConsole.cpp
 		../console/console.linux.cpp
 		)

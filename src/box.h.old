@@ -1,0 +1,41 @@
+#pragma once
+
+struct fbx {
+	fbx(float offNormX, float offNormY, float sizeNormX, float sizeNormY);
+
+	float offNormX, offNormY, sizeNormX, sizeNormY;
+};
+
+struct mbx {
+	mbx(float normx, float normy, int sizex, int sizey);
+	
+	float normx, normy;
+	int sizex, sizey;
+};
+
+struct box {
+	box(box* b, mbx m);	
+	box(box b, mbx m);	
+	box(mbx m);	
+	box(fbx f);	
+	box(box& box);
+	box();	
+	box(int offsetx, int offsety, int sizex, int sizey);
+		
+	//Get position of the advancedConsole's buffer within the bounds of this box
+	//Should use adv::get
+	int get(int x, int y);
+	
+	//check if bound to this box's size
+	bool bound(int x, int y);
+	
+	int getOffsetX(float scale);
+	int getOffsetY(float scale);
+	int getOffsetX(float scale, float length);
+	int getOffsetY(float scale, float length);
+	
+	void clip(int &x, int &y);
+	
+	int offsetx, offsety, sizex, sizey;
+	char character, color;
+};

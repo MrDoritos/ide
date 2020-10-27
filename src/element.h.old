@@ -1,3 +1,4 @@
+#pragma once
 #include <mutex>
 #include <thread>
 #include <condition_variable>
@@ -16,141 +17,13 @@
 #include <vector>
 #include <algorithm>
 
+#include "box.h"
+
 struct asyncDialog {
 	std::mutex mux;
 	std::condition_variable cond;
 	std::thread worker;
 	bool run;
-};
-
-struct fbx {
-	fbx(float offNormX, float offNormY, float sizeNormX, float sizeNormY) {
-		this->offNormX = offNormX;
-		this->offNormY = offNormY;
-		this->sizeNormX = sizeNormX;
-		this->sizeNormY = sizeNormY;
-	}
-	
-	float offNormX, offNormY, sizeNormX, sizeNormY;
-};
-
-struct mbx {
-	mbx(float normx, float normy, int sizex, int sizey) {
-		this->normx = normx;
-		this->normy = normy;
-		this->sizex = sizex;
-		this->sizey = sizey;
-	}
-	
-	float normx, normy;
-	int sizex, sizey;
-};
-
-struct box {
-	box(box* b, mbx m) {
-		this->sizex = m.sizex;//b->getOffsetX(m.normx, m.sizex);
-		this->sizey = m.sizey;//b->getOffsetY(m.normy, m.sizey);
-		this->offsetx = b->offsetx + b->getOffsetX(m.normx, m.sizex);
-		this->offsety = b->offsety + b->getOffsetY(m.normy, m.sizey);
-	}
-	
-	box(box b, mbx m) {
-		box(&b, m);
-	}
-	
-	box(mbx m) {
-		box b;
-		//box(b, m);
-		this->sizex = m.sizex;
-		this->sizey = m.sizey;
-		this->offsetx = b.offsetx + b.getOffsetX(m.normx, m.sizex);
-		this->offsety = b.offsety + b.getOffsetY(m.normy, m.sizey);
-	}
-	
-	box(fbx f) {
-		box b;
-		
-		this->sizex = b.sizex / (1.0f / f.sizeNormX);
-		this->sizey = b.sizey / (1.0f / f.sizeNormY);
-		this->offsetx = b.getOffsetX(f.offNormX, this->sizex);
-		this->offsety = b.getOffsetY(f.offNormY, this->sizey);
-	}
-	
-	box(box& box) {
-		this->offsetx = box.offsetx;
-		this->offsety = box.offsety;
-		this->sizex = box.sizex;
-		this->sizey = box.sizey;
-	}
-	box() {
-		sizex = adv::width;
-		sizey = adv::height;
-		offsetx = 0;
-		offsety = 0;
-		//sizex = adv::getOffsetX(0.5f);
-		//offsetx = adv::getOffsetX(0.5f, sizex);
-		//sizey = adv::getOffsetY(0.5f);
-		//offsety = adv::getOffsetY(0.5f, sizey);
-	}
-	
-	box(int offsetx, int offsety, int sizex, int sizey) {
-		this->offsetx = offsetx;
-		this->offsety = offsety;
-		this->sizex = sizex;
-		this->sizey = sizey;
-	}
-		
-	//Get position of the advancedConsole's buffer within the bounds of this box
-	//Should use adv::get
-	int get(int x, int y) {
-		int cx = x + offsetx;
-		int cy = y + offsety;
-		return (cy * adv::width) + cx;
-	}
-	
-	//check if bound to this box's size
-	bool bound(int x, int y) {
-		if (offsetx > x || sizex <= x)
-			return false;
-		if (offsety > y || sizey <= y)
-			return false;
-		return true;
-	}
-	
-	int getOffsetX(float scale) {
-		return getOffsetX(scale, 0);
-	}
-	
-	int getOffsetY(float scale) {
-		return getOffsetY(scale, 0);
-	}
-	
-	int getOffsetX(float scale, float length) {
-		if (length < 1) {
-			return (float(sizex) * scale);
-		}
-		if (length > sizex)
-			return 0.0f;
-		
-		return (float(sizex) * scale) - (length / 2);
-	}
-	
-	int getOffsetY(float scale, float length) {
-		if (length < 1) {
-			return (float(sizey) * scale);
-		}
-		if (length > sizey)
-			return 0.0f;
-		
-		return (float(sizey) * scale) - (length / 2);
-	}
-	
-	void clip(int &x, int &y) {
-		
-	}
-	
-	int offsetx, offsety, sizex, sizey;
-	char character, color;
 };
 
 struct dialog : public box {

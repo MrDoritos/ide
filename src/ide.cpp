@@ -1,5 +1,6 @@
-#include "advancedConsole.h"
-#include "element.h"
+//#include "advancedConsole.h"
+
+#include "element-ui.h"
 
 //#ifdef __WIN32
 //int wmain() {
@@ -7,11 +8,28 @@
 //int main() {
 //#endif
 int main() {
+	screen wscreen;
+	s_screen = &wscreen;
+	//textbox n(s_screen);
+	//terminalElement tE;
+	programRunner tE("echo", "Hello World!");
+	nullElement nE;
+	
+	wscreen.child->add(&nE);
+	nE.setc(0.0f,1.0f);
+	nE.add(tE);
+	
+	wscreen.start();
+	
+	tE.run();
+	
+	/*
 	while (!adv::ready);
 	
 	if (console::getImage() == IMAGE_LINUX) {
 		//adv::setDrawingMode(DRAWINGMODE_COMPARE);
 	}
+	*/
 
 	//raw();
 	//keypad(stdscr, 1);
@@ -21,6 +39,7 @@ int main() {
 	//messageDialog m({});
 	//m.show("Hello world!");
 	
+	/*
 	adv::clear();
 	int sel = 0,off = 0;
 	//openFileDialog o({{}, mbx{0.5f, 0.5f, 30, 30}});
@@ -38,6 +57,7 @@ int main() {
 		adv::clear();
 	
 	}
+	*/
 		
 	//adv::_advancedConsoleDestruct();
 	
