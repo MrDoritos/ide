@@ -1,5 +1,9 @@
 #pragma once
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <Windows.h>
+
 #include "screen.h"
 #include "element.h"
 
@@ -11,7 +15,7 @@ template<typename T>
 struct helperElement : public element {
 	void* derived;
 	helperElement(void* derived)
-		:element(s_screen) {
+		:element((struct screen*)s_screen) {
 			this->derived = derived;
 			if (derived)
 				handler.setReferer(derived);
@@ -147,18 +151,15 @@ struct programRunner : terminalElement {
 	{	}
 	
 	int run() {
-		//fprintf(stderr, "Running %s %s\r\n", path, args);
 		char buffer[128];
 		std::string strPath = std::string(path);
 		std::string strArgs = std::string(args);
 		std::string strCmd = strPath + " " + strArgs;
-		
-		FILE* pipe = popen(strCmd.c_str(), "r");
+		//strCmd.c_str()
+		FILE* pipe = popen("echo Hello World!", "r");
 		if (!pipe) {
 			terminalWriteLine("Internal: popen failed");
 			return -1;			
-		} else {
-			//fprintf(stderr, "Running...\r\n");
 		}
 		
 		while (!feof(pipe)) {
@@ -167,8 +168,6 @@ struct programRunner : terminalElement {
 			}
 		}
 		
-		//fprintf(stderr, "Finished Execution of Sub Process\r\n");
-		
 		pclose(pipe);
 		return 0;
 	}
@@ -176,7 +175,7 @@ struct programRunner : terminalElement {
 
 struct textbox : public element {
 	textbox(void* screen)
-		:element(screen)
+		:element((struct screen*)(screen))
 		{
 			tick = 0;
 			tickCount = 20;
