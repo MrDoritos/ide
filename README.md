@@ -16,6 +16,7 @@ It's important that you don't change your PWD when cloning the three repos
 ##### Step 2. Build
 
 ```
+> cd ide
 > mkdir build
 > cd build
 > cmake .. -G "MinGW Makefiles"
