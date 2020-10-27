@@ -50,7 +50,7 @@ set (CMAKE_CXX_STANDARD_REQUIRED True)
 set (CMAKE_CXX_COMPILER g++)
 
 if(UNIX)
-	target_link_libraries(${PROJECT_NAME})
+	target_link_libraries(${PROJECT_NAME} ncursesw pthread)
 endif()
 
 if(MINGW)
