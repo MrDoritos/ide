@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.7.2)
 set (PROJECT_NAME ide)
 project (${PROJECT_NAME} VERSION 1.0)
 
@@ -17,8 +17,6 @@ include_directories(${CONSOLEUI_INCLUDE_PATH})
 add_definitions(-w)
 add_definitions(-fpermissive)
 add_definitions(-ggdb)
-add_definitions(-std=c++11)
-add_definitions(-U__STRICT_ANSI__)
 
 if(MINGW)
 include_directories(src/windows)
